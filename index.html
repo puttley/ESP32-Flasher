@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ESP32-S3 Flash Tool</title>
+    <title>ESP32-S3 Flash Tool 2</title>
 </head>
 <body>
     <h1>ESP32-S3 Flash Tool</h1>
@@ -12,41 +12,58 @@
     <p id="status">Status: Not Connected</p>
 
     <script type="module">
-        import { ESPLoader } from './bundle.js';
+        import { ESPLoader, Transport } from './bundle.js';
 
         let espLoader;
 
         document.getElementById('connectBtn').addEventListener('click', async () => {
-            espLoader = new ESPLoader();
-            await espLoader.initialize();
-            document.getElementById('status').textContent = 'Status: Connected to ESP32';
+            try {
+                // Request a serial port connection
+                const port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+
+                // Create a Transport instance for ESPLoader
+                const transport = new Transport(port);
+                espLoader = new ESPLoader(transport); // Pass transport to ESPLoader
+
+                await espLoader.initialize();
+                document.getElementById('status').textContent = 'Status: Connected to ESP32';
+            } catch (error) {
+                console.error('Connection failed:', error);
+                document.getElementById('status').textContent = 'Status: Connection Failed';
+            }
         });
 
         document.getElementById('flashBtn').addEventListener('click', async () => {
-            const files = document.getElementById('firmwareFile').files;
-            if (files.length < 4) {
-                alert('Please select the four required .bin files');
-                return;
+            try {
+                const files = document.getElementById('firmwareFile').files;
+                if (files.length < 4) {
+                    alert('Please select the four required .bin files');
+                    return;
+                }
+
+                const fileData = {};
+                for (const file of files) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const address = getFlashAddress(file.name);
+                    fileData[address] = new Uint8Array(arrayBuffer);
+                }
+
+                await espLoader.writeFlash({
+                    flashMode: 'dio',  // Set flash mode to 'dio'
+                    files: [
+                        { address: 0x0000, data: fileData[0x0000] },
+                        { address: 0x8000, data: fileData[0x8000] },
+                        { address: 0xE000, data: fileData[0xE000] },
+                        { address: 0x10000, data: fileData[0x10000] },
+                    ],
+                });
+
+                document.getElementById('status').textContent = 'Status: Flash Complete';
+            } catch (error) {
+                console.error('Flashing failed:', error);
+                document.getElementById('status').textContent = 'Status: Flash Failed';
             }
-
-            const fileData = {};
-            for (const file of files) {
-                const arrayBuffer = await file.arrayBuffer();
-                const address = getFlashAddress(file.name);
-                fileData[address] = new Uint8Array(arrayBuffer);
-            }
-
-            await espLoader.writeFlash({
-                flashMode: 'dio',
-                files: [
-                    { address: 0x0000, data: fileData[0x0000] },
-                    { address: 0x8000, data: fileData[0x8000] },
-                    { address: 0xE000, data: fileData[0xE000] },
-                    { address: 0x10000, data: fileData[0x10000] },
-                ],
-            });
-
-            document.getElementById('status').textContent = 'Status: Flash Complete';
         });
 
         function getFlashAddress(fileName) {
