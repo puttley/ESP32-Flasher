@@ -2,7 +2,7 @@ let port;
 let esptool;
 
 // Import ESPTool directly from the module
-import { ESPTool } from 'https://unpkg.com/esptool-js@0.2.0/bundle.js';
+import { ESPTool } from 'https://unpkg.com/esptool-js/bundle.js';
 console.log("ESPTool is:", ESPTool);
 
 document.getElementById("connectButton").addEventListener("click", async () => {
