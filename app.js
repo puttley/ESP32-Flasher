@@ -4,21 +4,12 @@ let esptool;
 // Import ESPTool directly from the module
 // import { ESPTool } from 'https://unpkg.com/esptool-js/bundle.js';
 
-// Dynamically load bundle.js as a module
-import('https://unpkg.com/esptool-js/bundle.js')
-    .then((module) => {
-        // Check if ESPTool is available on the global window object
-        const ESPTool = window.ESPTool;
-        if (ESPTool) {
-            console.log("ESPTool loaded successfully:", ESPTool);
-            // Now you can use ESPTool here as expected
-        } else {
-            console.error("ESPTool is not available.");
-        }
-    })
-    .catch((error) => {
-        console.error("Failed to load ESPTool:", error);
-    });
+console.log("ESPTool is:", window.ESPTool);
+if (typeof window.ESPTool === "undefined") {
+    console.error("ESPTool is not available.");
+} else {
+    console.log("ESPTool loaded successfully!");
+}
 
 console.log("ESPTool is:", ESPTool);
 
