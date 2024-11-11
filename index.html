@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32-S3 Flasher 3</title>
+    <title>ESP32-S3 Flasher</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>ESP32-S3 Flasher 2</h1>
+    <h1>ESP32-S3 Flasher 3</h1>
     <button id="connectButton">Connect to ESP32-S3</button>
     <input type="file" id="binaryFiles" multiple>
     <progress id="progressBar" max="100" value="0"></progress>
@@ -15,6 +15,7 @@
     <!-- Load esptool.js from the CDN -->
     
     <script type="module" src="https://unpkg.com/esptool-js@0.2.0/bundle.js"></script>
-    <script src="app.js"></script>
+    <!-- Load your custom JavaScript as a module -->
+    <script type="module" src="app.js"></script>
 </body>
 </html>
