@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32-S3 Flasher</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>ESP32-S3 Flasher</h1>
+    <button id="connectButton">Connect to ESP32-S3</button>
+    <input type="file" id="binaryFiles" multiple>
+    <progress id="progressBar" max="100" value="0"></progress>
+    <pre id="logArea"></pre>
+    <!-- Load esptool.js from the CDN -->
+    
+    <script type="module" src="bundle.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
