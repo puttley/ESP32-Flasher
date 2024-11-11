@@ -7,14 +7,15 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>ESP32-S3 Flasher 4</h1>
+    <h1>ESP32-S3 Flasher 5</h1>
     <button id="connectButton">Connect to ESP32-S3</button>
     <input type="file" id="binaryFiles" multiple>
     <progress id="progressBar" max="100" value="0"></progress>
     <pre id="logArea"></pre>
     <!-- Load esptool.js from the CDN -->
     
-    <script type="module" src="https://unpkg.com/esptool-js/bundle.js"></script>
+    <!--script type="module" src="https://unpkg.com/esptool-js/bundle.js"></script-->
+    <script src="bundle.js"></script> <!-- Load as a regular script, not a module -->
     <!-- Load your custom JavaScript as a module -->
     <script type="module" src="app.js"></script>
 </body>
