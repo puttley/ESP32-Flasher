@@ -5,7 +5,7 @@
     <title>ESP32-S3 Flash Tool</title>
 </head>
 <body>
-    <h1>ESP32-S3 Flash Tool 1</h1>
+    <h1>ESP32-S3 Flash Tool 2</h1>
     <button id="connectBtn">Connect to ESP32</button>
     <button id="flashBtn">Flash Firmware</button>
     <input type="file" id="firmwareFile" accept=".bin" multiple>
@@ -17,21 +17,26 @@
         let espLoader;
 
         document.getElementById('connectBtn').addEventListener('click', async () => {
-    try {
-        // Request a serial port connection
-        const port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
+        try {
+            // Request a serial port connection
+            const port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
 
-        // Pass the port directly to ESPLoader (bypass Transport)
-        espLoader = new ESPLoader(port);
+            // Debugging: Log port information to verify it's connected properly
+            console.log('Port:', port);
+            console.log('Port Info:', port.getInfo ? port.getInfo() : 'getInfo method not available');
 
-        await espLoader.initialize();
-        document.getElementById('status').textContent = 'Status: Connected to ESP32';
-    } catch (error) {
-        console.error('Connection failed:', error);
-        document.getElementById('status').textContent = 'Status: Connection Failed';
-    }
-});
+            // Create a Transport instance for ESPLoader
+            const transport = new Transport(port);
+            espLoader = new ESPLoader(transport);
+
+            await espLoader.initialize();
+            document.getElementById('status').textContent = 'Status: Connected to ESP32';
+        } catch (error) {
+            console.error('Connection failed:', error);
+            document.getElementById('status').textContent = 'Status: Connection Failed';
+        }
+    });
 
         document.getElementById('flashBtn').addEventListener('click', async () => {
             try {
