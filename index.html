@@ -2,21 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32-S3 Flasher</title>
-    <link rel="stylesheet" href="style.css">
+    <title>ESP32-S3 Flash Tool</title>
+    <script src="bundle.js"></script>
 </head>
 <body>
-    <h1>ESP32-S3 Flasher 5</h1>
-    <button id="connectButton">Connect to ESP32-S3</button>
-    <input type="file" id="binaryFiles" multiple>
-    <progress id="progressBar" max="100" value="0"></progress>
-    <pre id="logArea"></pre>
-    <!-- Load esptool.js from the CDN -->
-    
-    <!--script type="module" src="https://unpkg.com/esptool-js/bundle.js"></script-->
-    <script src="bundle.js"></script> <!-- Load as a regular script, not a module -->
-    <!-- Load your custom JavaScript as a module -->
-    <script type="module" src="app.js"></script>
+    <h1>ESP32-S3 Flash Tool</h1>
+    <button id="connectBtn">Connect to ESP32</button>
+    <button id="flashBtn">Flash Firmware</button>
+    <input type="file" id="firmwareFile" accept=".bin" multiple>
+    <p id="status">Status: Not Connected</p>
+
+    <script>
+        let esptool;
+
+        document.getElementById('connectBtn').addEventListener('click', async () => {
+            esptool = new ESPTool();
+            await esptool.initialize();
+            document.getElementById('status').textContent = 'Status: Connected to ESP32';
+        });
+
+        document.getElementById('flashBtn').addEventListener('click', async () => {
+            const files = document.getElementById('firmwareFile').files;
+            if (files.length < 4) {
+                alert('Please select the four required .bin files');
+                return;
+            }
+
+            const fileData = {};
+            for (const file of files) {
+                const arrayBuffer = await file.arrayBuffer();
+                const address = getFlashAddress(file.name);
+                fileData[address] = new Uint8Array(arrayBuffer);
+            }
+
+            await esptool.writeFlash({
+                flashMode: 'dio',  // Set flash mode to 'dio'
+                files: [
+                    { address: 0x0000, data: fileData[0x0000] },       // bootloader.bin
+                    { address: 0x8000, data: fileData[0x8000] },       // partition-table.bin
+                    { address: 0xE000, data: fileData[0xE000] },       // boot_app0.bin
+                    { address: 0x10000, data: fileData[0x10000] },     // firmware.bin
+                ],
+            });
+
+            document.getElementById('status').textContent = 'Status: Flash Complete';
+        });
+
+        function getFlashAddress(fileName) {
+            if (fileName.includes("bootloader")) return 0x0000;
+            if (fileName.includes("partition")) return 0x8000;
+            if (fileName.includes("boot_app0")) return 0xE000;
+            if (fileName.includes("firmware")) return 0x10000;
+            alert('Unexpected file name');
+            return null;
+        }
+    </script>
 </body>
 </html>
