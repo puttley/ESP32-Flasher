@@ -1,9 +1,7 @@
 let port;
 let esptool;
 
-import { ESPTool } from './bundle.js';
-console.log("ESPTool is:", ESPTool);
-//console.log("ESPTool is:", window.ESPTool);
+console.log("ESPTool is:", window.ESPTool);
 
 document.getElementById("connectButton").addEventListener("click", async () => {
     const logArea = document.getElementById("logArea");
