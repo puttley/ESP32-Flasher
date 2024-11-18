@@ -2,85 +2,59 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32-S3 Binary Uploader</title>
+    <title>ESP32 Flasher</title>
 </head>
 <body>
-    <h1>ESP32-S3 Binary Uploader</h1>
-    <input type="file" id="fileInput" accept=".bin" />
-    <button id="connectBtn">Connect to ESP32</button>
-    <button id="uploadBtn">Upload Binary</button>
-    <progress id="progressBar" value="0" max="100" style="display: none;"></progress>
+    <button id="connect">Connect</button>
+    <button id="load">Load Binary</button>
+    <button id="flash" disabled>Flash</button>
     <p id="status"></p>
+    <progress id="progress" max="100" value="0"></progress>
 
     <script type="module">
-        import { ESPLoader } from './bundle.js'; // Update this path as needed
 
-        let port, espTool;
-        let connected = false;
+        import { ESPLoader } from './bundle.js';
 
-        const fileInput = document.getElementById("fileInput");
-        const connectBtn = document.getElementById("connectBtn");
-        const uploadBtn = document.getElementById("uploadBtn");
-        const progressBar = document.getElementById("progressBar");
-        const status = document.getElementById("status");
+        let espTool, port, fileArray;
 
-        // Function to connect to ESP32
-        connectBtn.addEventListener("click", async () => {
-            if (!connected) {
-                try {
-                    port = await navigator.serial.requestPort();
-                    await port.open({ baudRate: 115200 });
-                    espTool = new ESPLoader(port);
-                    await espTool.initialize();
-                    connected = true;
-                    status.textContent = "Connected to ESP32";
-                    connectBtn.textContent = "Disconnect";
-                    uploadBtn.disabled = false;
-                } catch (err) {
-                    status.textContent = `Connection failed: ${err.message}`;
-                }
-            } else {
-                await port.close();
-                connected = false;
-                status.textContent = "Disconnected";
-                connectBtn.textContent = "Connect to ESP32";
-                uploadBtn.disabled = true;
-            }
-        });
-
-        // Function to upload binary file
-        uploadBtn.addEventListener("click", async () => {
-            if (!fileInput.files.length) {
-                alert("Please select a binary file to upload.");
-                return;
-            }
-
-            const file = fileInput.files[0];
-            const fileBuffer = await file.arrayBuffer();
-            const fileArray = new Uint8Array(fileBuffer);
-
-            progressBar.style.display = "block";
-            progressBar.value = 0;
-            status.textContent = "Starting upload...";
-
+        async function connect() {
             try {
-                await espTool.flashData(
-                    fileArray,
-                    0x000, // Starting address
-                    (bytesWritten, totalBytes) => {
-                        const progress = (bytesWritten / totalBytes) * 100;
-                        progressBar.value = progress;
-                        status.textContent = `Uploading... ${Math.floor(progress)}%`;
-                    }
-                );
-                status.textContent = "Upload complete!";
-            } catch (err) {
-                status.textContent = `Upload failed: ${err.message}`;
-            } finally {
-                progressBar.style.display = "none";
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+                espTool = new ESPLoader(port);
+                await espTool.initialize();
+                document.getElementById("status").textContent = "Connected";
+                document.getElementById("flash").disabled = false;
+            } catch (error) {
+                console.error(error);
+                document.getElementById("status").textContent = "Failed to connect";
             }
-        });
+        }
+
+        async function loadFile() {
+            const [fileHandle] = await window.showOpenFilePicker();
+            const file = await fileHandle.getFile();
+            fileArray = new Uint8Array(await file.arrayBuffer());
+            document.getElementById("status").textContent = "Binary loaded";
+        }
+
+        async function flashFile() {
+            try {
+                await espTool.flashData(fileArray, 0x000, (written, total) => {
+                    const progress = (written / total) * 100;
+                    document.getElementById("progress").value = progress;
+                    document.getElementById("status").textContent = `Flashing: ${Math.floor(progress)}%`;
+                });
+                document.getElementById("status").textContent = "Flash complete!";
+            } catch (error) {
+                console.error(error);
+                document.getElementById("status").textContent = "Flash failed";
+            }
+        }
+
+        document.getElementById("connect").addEventListener("click", connect);
+        document.getElementById("load").addEventListener("click", loadFile);
+        document.getElementById("flash").addEventListener("click", flashFile);
     </script>
 </body>
 </html>
