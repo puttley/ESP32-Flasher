@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ESP32 Flasher 1</title>
+    <title>ESP32 Flasher</title>
 </head>
 <body>
     <button id="connect">Connect</button>
@@ -13,7 +13,7 @@
 
     <script type="module">
 
-        import { ESPLoader } from 'https://unpkg.com/esptool-js/lib/index.js';
+        import { ESPLoader } from './bundle.js';
 
 
         let espTool, port, fileArray;
