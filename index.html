@@ -2,80 +2,89 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ESP32-S3 Flash Tool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32-S3 Binary Uploader</title>
 </head>
 <body>
-    <h1>ESP32-S3 Flash Tool 3</h1>
+    <h1>ESP32-S3 Binary Uploader</h1>
+    <input type="file" id="fileInput" accept=".bin" />
     <button id="connectBtn">Connect to ESP32</button>
-    <button id="flashBtn">Flash Firmware</button>
-    <input type="file" id="firmwareFile" accept=".bin" multiple>
-    <p id="status">Status: Not Connected</p>
+    <button id="uploadBtn" disabled>Upload Binary</button>
+    <progress id="progressBar" value="0" max="100" style="display: none;"></progress>
+    <p id="status"></p>
+
+    <!--scrip type="module" src="bundle.js"></script--> <!-- Ensure this path points to the esptool.js file -->
+    <!--script src="https://unpkg.com/esptool-js/bundle.js"></script-->
+    <!--script src="https://espressif.github.io/esptool-js/index.4c906036.js" type="module"></script-->
 
     <script type="module">
-        import { ESPLoader, Transport } from './bundle.js';
+        import { ESPLoader } from './bundle.js'; </script>// Update this path as needed
 
-        let espLoader;
+    <script>
 
-        document.getElementById('connectBtn').addEventListener('click', async () => {
-    try {
-        // Request a serial port connection
-        const port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
+        let port, reader, writer, espTool;
+        let connected = false;
 
-        // Check if a Transport class is required
-        const transport = new Transport(port);
+        const fileInput = document.getElementById("fileInput");
+        const connectBtn = document.getElementById("connectBtn");
+        const uploadBtn = document.getElementById("uploadBtn");
+        const progressBar = document.getElementById("progressBar");
+        const status = document.getElementById("status");
 
-        // Pass the transport to ESPLoader
-        espLoader = new ESPLoader(transport);
-
-        await espLoader.initialize();
-        document.getElementById('status').textContent = 'Status: Connected to ESP32';
-    } catch (error) {
-        console.error('Connection failed:', error);
-        document.getElementById('status').textContent = 'Status: Connection Failed';
-    }
-});
-
-        document.getElementById('flashBtn').addEventListener('click', async () => {
-            try {
-                const files = document.getElementById('firmwareFile').files;
-                if (files.length < 4) {
-                    alert('Please select the four required .bin files');
-                    return;
+        connectBtn.addEventListener("click", async () => {
+            if (!connected) {
+                try {
+                    port = await navigator.serial.requestPort();
+                    await port.open({ baudRate: 115200 });
+                    espTool = new ESPLoader(port);
+                    await espTool.initialize();
+                    connected = true;
+                    status.textContent = "Connected to ESP32";
+                    connectBtn.textContent = "Disconnect";
+                    uploadBtn.disabled = false;
+                } catch (err) {
+                    status.textContent = `Connection failed: ${err.message}`;
                 }
-
-                const fileData = {};
-                for (const file of files) {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const address = getFlashAddress(file.name);
-                    fileData[address] = new Uint8Array(arrayBuffer);
-                }
-
-                await espLoader.writeFlash({
-                    flashMode: 'dio',  // Set flash mode to 'dio'
-                    files: [
-                        { address: 0x0000, data: fileData[0x0000] },
-                        { address: 0x8000, data: fileData[0x8000] },
-                        { address: 0xE000, data: fileData[0xE000] },
-                        { address: 0x10000, data: fileData[0x10000] },
-                    ],
-                });
-
-                document.getElementById('status').textContent = 'Status: Flash Complete';
-            } catch (error) {
-                console.error('Flashing failed:', error);
-                document.getElementById('status').textContent = 'Status: Flash Failed';
+            } else {
+                await port.close();
+                connected = false;
+                status.textContent = "Disconnected";
+                connectBtn.textContent = "Connect to ESP32";
+                uploadBtn.disabled = true;
             }
         });
 
-        function getFlashAddress(fileName) {
-            if (fileName.includes("bootloader")) return 0x0000;
-            if (fileName.includes("partition")) return 0x8000;
-            if (fileName.includes("boot_app0")) return 0xE000;
-            if (fileName.includes("firmware")) return 0x10000;
-            alert('Unexpected file name');
-            return null;
-        }
+        uploadBtn.addEventListener("click", async () => {
+            if (!fileInput.files.length) {
+                alert("Please select a binary file to upload.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const fileBuffer = await file.arrayBuffer();
+            const fileArray = new Uint8Array(fileBuffer);
+
+            progressBar.style.display = "block";
+            progressBar.value = 0;
+            status.textContent = "Starting upload...";
+
+            try {
+                await espTool.flashData(
+                    fileArray,
+                    0x000, // Starting address
+                    (bytesWritten, totalBytes) => {
+                        const progress = (bytesWritten / totalBytes) * 100;
+                        progressBar.value = progress;
+                        status.textContent = `Uploading... ${Math.floor(progress)}%`;
+                    }
+                );
+                status.textContent = "Upload complete!";
+            } catch (err) {
+                status.textContent = `Upload failed: ${err.message}`;
+            } finally {
+                progressBar.style.display = "none";
+            }
+        });
     </script>
 </body>
 </html>
