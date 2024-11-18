@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32-S3 Binary Uploader 1</title>
+    <title>ESP32-S3 Binary Uploader</title>
 </head>
 <body>
     <h1>ESP32-S3 Binary Uploader</h1>
@@ -13,14 +13,10 @@
     <progress id="progressBar" value="0" max="100" style="display: none;"></progress>
     <p id="status"></p>
 
-    <!--scrip type="module" src="bundle.js"></script--> <!-- Ensure this path points to the esptool.js file -->
-    <!--script src="https://unpkg.com/esptool-js/bundle.js"></script-->
-    <!--script src="https://espressif.github.io/esptool-js/index.4c906036.js" type="module"></script-->
-
     <script type="module">
-        import { ESPLoader } from './bundle.js'; 
+        import { ESPLoader } from './path/to/bundle.js'; // Update this path as needed
 
-        let port, reader, writer, espTool;
+        let port, espTool;
         let connected = false;
 
         const fileInput = document.getElementById("fileInput");
@@ -29,6 +25,7 @@
         const progressBar = document.getElementById("progressBar");
         const status = document.getElementById("status");
 
+        // Function to connect to ESP32
         connectBtn.addEventListener("click", async () => {
             if (!connected) {
                 try {
@@ -52,6 +49,7 @@
             }
         });
 
+        // Function to upload binary file
         uploadBtn.addEventListener("click", async () => {
             if (!fileInput.files.length) {
                 alert("Please select a binary file to upload.");
