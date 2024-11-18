@@ -3130,8 +3130,8 @@ class Qe {
         void 0 !== A.debugLogging && (this.debugLogging = A.debugLogging),
         A.port && (this.transport = new Ie(A.port)),
         void 0 !== A.enableTracing && (this.transport.tracing = A.enableTracing),
-        this.info("esptool.js"),
-        //this.info("Serial port " + this.transport.getInfo())
+        this.info("esptool.js")
+        
     }
     _sleep(A) {
         return new Promise((t => setTimeout(t, A)))
