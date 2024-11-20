@@ -1,83 +1,189 @@
-let port;
-let esptool;
 
-// Import ESPTool directly from the module
-// import { ESPTool } from 'https://unpkg.com/esptool-js/bundle.js';
+//import { ESPLoader } from "https://cdn.jsdelivr.net/gh/adafruit/Adafruit_WebSerial_ESPTool@latest/dist/web/index.js";
 
-console.log("ESPTool is:", window.ESPTool);
-if (typeof window.ESPTool === "undefined") {
-    console.error("ESPTool is not available.");
-} else {
-    console.log("ESPTool loaded successfully!");
-}
+document.addEventListener("DOMContentLoaded", () => {
+    const connectButton = document.getElementById("connectButton");
+    const flashButton = document.getElementById("flashButton");
+    const binaryFileInput = document.getElementById("binaryFile");
+    const status = document.getElementById("status");
 
-console.log("ESPTool is:", ESPTool);
+    const firmware = document.querySelectorAll(".upload .firmware input");
 
-document.getElementById("connectButton").addEventListener("click", async () => {
-    const logArea = document.getElementById("logArea");
+    //const offsets = document.querySelectorAll(".upload .offset");
 
-    try {
-        // Request a serial port and open a connection
-        port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
+    const offsets = 0;
 
-        // Initialize esptool after connection
-        esptool = new ESPTool(port);
-        await esptool.initialize();
 
-        logArea.textContent = "Connected to ESP32-S3. Please select the binary files.";
+    let esploader;
+    let binaryFile;
+    let espStub;
 
-    } catch (error) {
-        logArea.textContent = `Connection error: ${error.message}`;
-    }
-});
+    // Handle file selection
+    binaryFileInput.addEventListener("change", (event) => {
+        binaryFile = event.target.files[0];
+        if (binaryFile) {
+            status.textContent = `Selected file: ${binaryFile.name}`;
+        }
+    });
 
-document.getElementById("binaryFiles").addEventListener("change", async () => {
-    const logArea = document.getElementById("logArea");
-    const progressBar = document.getElementById("progressBar");
-    const binaryFiles = document.getElementById("binaryFiles").files;
-
-    // Ensure user has selected exactly four files
-    if (binaryFiles.length !== 4) {
-        logArea.textContent = "Please select all four binary files.";
-        return;
+    function logMsg(text) {
+    console.log(text);
     }
 
-    if (!port || !esptool) {
-        logArea.textContent = "Please connect to the ESP32-S3 first.";
-        return;
+    function debugMsg(text) {
+    console.log(text);
     }
 
-    const fileAddresses = {
-        "bootloader.bin": 0x1000,
-        "partition-table.bin": 0x8000,
-        "application.bin": 0x10000,
-        "spiffs.bin": 0x290000
-    };
+    function errorMsg(text) {
+    console.error(text);
+    }
 
-    logArea.textContent = "Starting flash...";
+    function formatMacAddr(macAddr) {
+      return macAddr
+        .map((value) => value.toString(16).toUpperCase().padStart(2, "0"))
+        .join(":");
+    }
 
-    try {
-        // Flash each file to its respective address
-        for (let file of binaryFiles) {
-            const data = await file.arrayBuffer();
-            const address = fileAddresses[file.name];
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
 
-            if (address === undefined) {
-                logArea.textContent += `\nError: Unrecognized file ${file.name}.`;
-                continue;
+    // Erase ESP32
+    eraseButton.addEventListener("click", async () => {
+      if (
+        window.confirm("This will erase the entire flash. Click OK to continue.")
+      ) {
+
+        try {
+          logMsg("Erasing flash memory. Please wait...");
+          let stamp = Date.now();
+          await espStub.eraseFlash();
+          logMsg("Finished. Took " + (Date.now() - stamp) + "ms to erase.");
+        } catch (e) {
+          errorMsg(e);
+        } finally {
+
+        }
+      }
+    });
+
+    // Connect to the ESP32
+    connectButton.addEventListener("click", async () => {
+          if (espStub) {
+            await espStub.disconnect();
+            await espStub.port.close();
+            espStub = undefined;
+            return;
+          }
+          const esploaderMod = await window.esptoolPackage;
+
+          const esploader = await esploaderMod.connect({
+            log: (...args) => logMsg(...args),
+            debug: (...args) => debugMsg(...args),
+            error: (...args) => errorMsg(...args),
+          });
+
+          try {
+            await esploader.initialize();
+
+            logMsg("Connected to " + esploader.chipName);
+            logMsg("MAC Address: " + formatMacAddr(esploader.macAddr()));
+
+            espStub = await esploader.runStub();
+
+            espStub.addEventListener("disconnect", () => {
+              espStub = false;
+            });
+          } catch (err) {
+            await esploader.disconnect();
+            throw err;
+          }
+
+/*        try {
+            status.textContent = "Requesting device...";
+            const device = await navigator.serial.requestPort();
+
+            if (!device) {
+                throw new Error("No device selected.");
             }
 
-            logArea.textContent += `\nFlashing ${file.name} to address 0x${address.toString(16)}...`;
+            status.textContent = "Initializing connection...";
+            esploader = new ESPLoader(device, { debug: true });
 
-            // Flash the binary file to the specific address
-            await esptool.flashData(new Uint8Array(data), (percent) => {
-                progressBar.value = percent;
-            }, address);
+            await esploader.initialize();
+            status.textContent = "Connected to ESP32!";
+            flashButton.disabled = false;
+        } catch (error) {
+            status.textContent = `Connection failed: ${error.message}`;
+          }
+*/
+    });
+
+    flashButton.addEventListener("click", async () => {
+
+
+      const fileArrayBuffer = await binaryFile.arrayBuffer();
+      let contents = new Uint8Array(fileArrayBuffer);
+        let binfile = 1;
+      //  let contents = await readUploadedFileAsArrayBuffer(binfile);
+        let offsetadd = 0;
+        try {
+          let offset = parseInt(offsetadd, 16);
+
+          await espStub.flashData(
+            contents,
+            (bytesWritten, totalBytes) => {
+            //  progressBar.style.width =
+            //    Math.floor((bytesWritten / totalBytes) * 100) + "%";
+            },
+            offset
+          );
+          await sleep(100);
+        } catch (e) {
+          errorMsg(e);
         }
 
-        logArea.textContent += "\nFlash complete!";
-    } catch (error) {
-        logArea.textContent = `Error during flash: ${error.message}`;
-    }
+      logMsg("To run the new firmware, please reset your device.");
+    });
+
+
+
+/*
+    // Flash the ESP32
+    flashButton.addEventListener("click", async () => {
+        if (!binaryFile) {
+            status.textContent = "No file selected!";
+            return;
+        }
+
+        try {
+            status.textContent = "Preparing to flash...";
+            //const offset = 0x000; // Fixed offset
+            const offsets = 0;
+            let offset = parseInt(0, 16);
+            const fileArrayBuffer = await binaryFile.arrayBuffer();
+
+            status.textContent = "Flashing started...";
+            await espStub.flashData(
+              new Uint8Array(fileArrayBuffer),
+              (bytesWritten, totalBytes) => {
+          //  await espStub.flashData(new Uint8Array(fileArrayBuffer), offset, (percentage) => {
+          //  status.textContent = `Flashing: ${percentage.toFixed(2)}% completed`;
+          //  });
+          },
+            offset
+          );
+
+            await sleep(100);
+            status.textContent = "Flashing successful!";
+        } catch (error) {
+            //status.textContent = `Flashing failed: ${error.message}`;
+            //errorMsg(error);
+            //console.log(erro.message);
+
+           } finally {
+        }
+    });
+*/
+
 });

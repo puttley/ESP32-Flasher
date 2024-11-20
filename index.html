@@ -2,60 +2,59 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ESP32 Flasher</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Flash Tool</title>
+    <!--script src="https://cdn.jsdelivr.net/gh/adafruit/Adafruit_WebSerial_ESPTool@1.2.0/dist/web/index.js"></script-->
+
+    <script module>
+      window.esptoolPackage = import(
+        // In development we import locally.
+        window.location.hostname === "localhost"
+          ? "/dist/web/index.js"
+          : "https://cdn.jsdelivr.net/gh/adafruit/Adafruit_WebSerial_ESPTool@latest/dist/web/index.js"
+      );
+    </script>
+
+    <!--script module>
+      window.esptoolPackage = import(
+        // In development we import locally.
+        window.location.hostname === "localhost"
+          ? "./index.js"
+          : "./index.js"
+      );
+    </script-->
+
+
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        input {
+            margin: 10px;
+        }
+    </style>
 </head>
 <body>
-    <button id="connect">Connect</button>
-    <button id="load">Load Binary</button>
-    <button id="flash" disabled>Flash</button>
+    <h1>ESP32 Flash Tool</h1>
+    <p>Select a binary file to flash:</p>
+    <input type="file" id="binaryFile" accept=".bin" />
+    <button id="connectButton">Connect</button>
+    <button id="flashButton">Flash</button>
+    <button id="eraseButton">Erase</button>
     <p id="status"></p>
-    <progress id="progress" max="100" value="0"></progress>
-
-    <script type="module">
-
-        import { ESPLoader } from './bundle.js';
-
-
-        let espTool, port, fileArray;
-
-        async function connect() {
-            try {
-                port = await navigator.serial.requestPort();
-                await port.open({ baudRate: 115200 });
-                espTool = new ESPLoader(port);
-                await espTool.initialize();
-                document.getElementById("status").textContent = "Connected";
-                document.getElementById("flash").disabled = false;
-            } catch (error) {
-                console.error(error);
-                document.getElementById("status").textContent = "Failed to connect";
-            }
-        }
-
-        async function loadFile() {
-            const [fileHandle] = await window.showOpenFilePicker();
-            const file = await fileHandle.getFile();
-            fileArray = new Uint8Array(await file.arrayBuffer());
-            document.getElementById("status").textContent = "Binary loaded";
-        }
-
-        async function flashFile() {
-            try {
-                await espTool.flashData(fileArray, 0x000, (written, total) => {
-                    const progress = (written / total) * 100;
-                    document.getElementById("progress").value = progress;
-                    document.getElementById("status").textContent = `Flashing: ${Math.floor(progress)}%`;
-                });
-                document.getElementById("status").textContent = "Flash complete!";
-            } catch (error) {
-                console.error(error);
-                document.getElementById("status").textContent = "Flash failed";
-            }
-        }
-
-        document.getElementById("connect").addEventListener("click", connect);
-        document.getElementById("load").addEventListener("click", loadFile);
-        document.getElementById("flash").addEventListener("click", flashFile);
-    </script>
+    <!--script src="app.js"></script-->
+    <!--script type="module" src="app.js"></script-->
+    <script src="app.js" module defer></script>
 </body>
 </html>
