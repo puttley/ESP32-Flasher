@@ -1,2 +1,2 @@
 # esptool
-Prizm Pro ESPtool
+ESP32 Web Flasher -- uses Adafruit's version of esptool-js javascript library.
