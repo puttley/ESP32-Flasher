@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>ESP32 Binary WebFlasher</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <script module>
+      window.esptoolPackage = import(
+        window.location.hostname === "localhost"
+          ? "/dist/web/index.js"
+          : "https://cdn.jsdelivr.net/gh/adafruit/Adafruit_WebSerial_ESPTool@latest/dist/web/index.js"
+      );
+    </script>
+
+    <script src="./script.js" module defer></script>
+
+  </head>
+  <body>
+    <header class="header">
+      <div class="left">
+        <label>Flash binary files to ESP32</label>
+      </div>
+      <p ></p>
+      <div class="right">
+        <select id="baudRate"></select>
+        <button id="butConnect" type="button">Connect</button>
+      </div>
+      <p ></p>
+    </header>
+    <main class="main">
+      <div id="app">
+        <div id="commands">
+          <!-- Firmware upload blocks -->
+          <div class="upload">
+            <label>
+              Offset: 0x
+              <input class="offset" type="text" value="0" />
+            </label>
+            <label class="firmware">
+              <input type="file" accept=".bin"/>
+              </label>
+          </div>
+          <div class="upload">
+            <label>
+              Offset: 0x
+              <input class="offset" type="text" value="0" />
+            </label>
+            <label class="firmware">
+              <input type="file" accept=".bin" />
+            </label>
+          </div>
+          <div class="upload">
+            <label>
+              Offset: 0x
+              <input class="offset" type="text" value="0" />
+            </label>
+            <label class="firmware">
+              <input type="file" accept=".bin" />
+            </label>
+          </div>
+          <div class="upload">
+            <label>
+              Offset: 0x
+              <input class="offset" type="text" value="0" />
+            </label>
+            <label class="firmware">
+              <input type="file" accept=".bin" />
+            </label>
+          </div>
+          <!-- Action buttons -->
+
+          <p id="status"></p>
+          <div class="buttons">
+            <button id="butErase" type="button" disabled="disabled">
+              Erase
+            </button>
+            <button id="butProgram" type="button" disabled="disabled">
+              Program
+            </button>
+          </div>
+        </div>
+        <!-- Log display -->
+        <div id="log"></div>
+      </div>
+    </main>
+    <footer class="footer">
+      <div class="justify controls">
+        <div>
+          <!-- Autoscroll toggle -->
+          <div class="onoffswitch">
+            <input
+              type="checkbox"
+              name="autoscroll"
+              class="onoffswitch-checkbox"
+              id="autoscroll"
+            />
+            <label class="onoffswitch-label" for="autoscroll">
+              <span class="onoffswitch-inner"></span>
+              <span class="onoffswitch-switch"></span>
+            </label>
+          </div>
+        </div>
+        <button id="butClear" type="button">Clear Text</button>
+      </div>
+    </footer>
+  </body>
+</html>
